@@ -67,6 +67,9 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     //for keeping track of the stat Contract Address
     address private statsAddress;
 
+    //tokenId => 0-149 card no.
+    mapping(uint16 => uint8) cardType;
+
     constructor(
         address _vrfCoordinator,
         address _linkToken,
@@ -187,13 +190,14 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         for(uint8 i =0; i<ids.length; i++){
             _mint(to, ids[i]);
             emit mint(ids[i]);
+            cardType[ids[i]] = randNums[i];
+
         }
 
         //send this to stat contract
         bool success = IStats(statsAddress).setBaseStats(ids, randNums);
         require(success);
 
-        //set tokenURIs
     }
 
 
@@ -213,7 +217,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         require(_exists(_tokenId));
 
         if(!revealed) {uri = string(abi.encodePacked(baseURI, notRevealed));}
-        else{uri = string(abi.encodePacked(baseURI, ciD, string(abi.encodePacked(_tokenId)), extension));}
+        else{uri = string(abi.encodePacked(baseURI, ciD, string(abi.encodePacked(cardType[_tokenId])), extension));}
 
     }
 
