@@ -2,6 +2,9 @@ pragma solidity ^0.8.7;
 
 library MinterLib {
 
+    event PriceIncrease(uint newPrice);
+
+    //used for splitting 1 random number into upto 10 different random numbers
     uint16[] constant primes = [
         2909,
         2753,
@@ -21,10 +24,7 @@ library MinterLib {
         }
     }
 
-    //does this need an explanation?
-    event PriceIncrease(uint newPrice);
-
-    //uses bit manipulation to double the price
+    //increases the price by 5% 
     function updatePrice(uint _price)internal returns(uint price) {
         price = _price *105/100;
         emit PriceIncrease(price);
@@ -80,9 +80,5 @@ library MinterLib {
             tokens[i] = totalMinted + i; 
         }
     }
-
-
-
-
 
 }
