@@ -22,6 +22,20 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     event Revealed();
     event Mint(uint16 tokenId);
 
+    //used for splitting 1 random number into upto 10 different random numbers
+    uint16[] constant primes = [
+        2909,
+        2753,
+        3593,
+        3461,
+        3797,
+        4391,
+        5647,
+        4441,
+        4621,
+        5333
+    ];
+
     //as it says on the tin
     address[] private paymentsTo;
     uint16[] private shares;
@@ -185,7 +199,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         uint16[] ids = requests[requestId];
         address to = mintTo[requestId];
     
-        uint8[ids.length] randNums = MinterLib.RNG(ids.length, randomness);
+        uint8[ids.length] randNums = MinterLib.RNG(ids.length, randomness, primes);
 
         for(uint8 i =0; i<ids.length; i++){
             _mint(to, ids[i]);

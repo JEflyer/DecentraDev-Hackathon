@@ -3,6 +3,9 @@ pragma solidity ^0.8.7;
 //import stats struct
 import "./structs/statsStruct.sol";
 
+//import stats library
+import "./libraries/statLib.sol";
+
 //import chainlink API call client
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
@@ -39,8 +42,8 @@ contract Stats is ChainlinkClient{
     //for making different calls to the metadata
     string[] private statCategories = [
         "stuff here",
-        "More stuff",
-    ]
+        "More stuff"
+    ];
 
     //define struct for reuest data
     struct data {
@@ -55,7 +58,7 @@ contract Stats is ChainlinkClient{
         address _game,
         address _minter,
         address _oracle,
-        string memory _jobId,
+        bytes32 _jobId,
         uint256 _fee
     ) {
         game = _game;
@@ -83,29 +86,30 @@ contract Stats is ChainlinkClient{
         _;
     }
 
-    function setBaseStats(uint16[] ids, uint8[] rands) external onlyMinter returns(bool){
+    function setBaseStats(uint16[] memory ids, uint8[] memory rands) external onlyMinter returns(bool){
         for(uint i = 0; i< ids.length; i++){
             currentStats[ids[i]] = baseStats[rands[i]];
+            card[ids[i]] = rands[i];
         }
         return true;
     }
 
     function callBaseStats(uint8 from, uint8 to) external onlyAdmin{
-        for(uint i = from; i<= to; i++){
+        for(uint8 i = from; i<= to; i++){
             _callBaseStats(i);
         }
     }
 
     function _callBaseStats(uint8 num) internal {
-        for(uint i =0; i< statCategories.length; i++){
+        for(uint8 i =0; i< statCategories.length; i++){
             //build request
             Chainlink.Request memory request = buildChainlinkRequest(jobId,address(this),this.fulfill.selector);
             
             //declare the link being called
-            request.add("get", abi.encodePacked("https://gateway.pinata.cloud/ipfs/",CID,string(abi.encodePacked(num)), ".JSON"));
+            request.add("get", string(abi.encodePacked("https://gateway.pinata.cloud/ipfs/SOME_HASH_HERE/",string(abi.encodePacked(num)), ".JSON")));
             
             //declaring navigation path throguh json file
-            string pathToStat = string(abi.encodePacked("stats.",statCategories[i]));
+            string memory pathToStat = string(abi.encodePacked("stats.",statCategories[i]));
             request.add("path",pathToStat);
 
             //send request get request id
@@ -122,10 +126,80 @@ contract Stats is ChainlinkClient{
         data memory info = requests[_requestId];
         
         //the card that is having it's stat upgraded
-        baseStats[info.cardBeingUpdated]
+        baseStats[info.cardBeingUpdated];
 
         // if statements to define course of action 
+        if (info.statBeingUpdated == 0){
+            baseStats[info.cardBeingUpdated].health = _stat;
+        }
+        if (info.statBeingUpdated == 1){
+            baseStats[info.cardBeingUpdated].noOfAttacks = _stat;
+        }
+        if (info.statBeingUpdated == 2){
+            baseStats[info.cardBeingUpdated].attackOneDamage = _stat;
+        }
+        if (info.statBeingUpdated == 3){
+            baseStats[info.cardBeingUpdated].attackOneEnergyCost = _stat;
+        }
+        if (info.statBeingUpdated == 4){
+            baseStats[info.cardBeingUpdated].attackTwoDamage = _stat;
+        }
+        if (info.statBeingUpdated == 5){
+            baseStats[info.cardBeingUpdated].attackTwoEnergyCost = _stat;
+        }
+        if (info.statBeingUpdated == 6){
+            baseStats[info.cardBeingUpdated].element = _stat;
+            baseStats[info.cardBeingUpdated].strength = statsLib.getStrength(_stat);
+            baseStats[info.cardBeingUpdated].weakness = statsLib.getWeakness(_stat);
+        }
     }
 
+    function updateAdmin(address _admin) external onlyAdmin {
+        admin = _admin;
+    }
 
+    function updateGameContract(address _game) external onlyAdmin {
+        game = _game;
+    }
+
+    function updateMinterContract(address _minter) external onlyAdmin {
+        minter = _minter;
+    }
+
+    //getter functions
+    function getHP(uint16 token) external view returns(uint8){
+        return currentStats[token].health;
+    }
+
+    function getNoOfAttacks(uint16 token) external view returns(uint8){
+        return currentStats[token].noOfAttacks;
+    }
+
+    function getAttackOneDamage(bool which, uint16 token) external view returns(uint8){
+        if(which){//if true get attack 1 DMG
+            return currentStats[token].attackOneDamage;
+        } else {
+            return currentStats[token].attackTwoDamage;
+        }
+    }
+
+    function getAttackEnergyCost(bool which, uint16 token) external view returns (uint8){
+        if(which){//if true get attack 1 EC
+            return currentStats[token].attackOneEnergyCost;
+        }else{
+            return currentStats[token].attackTwoEnergyCost;
+        }
+    }
+
+    function getElement(uint16 token) external view returns(uint8){
+        return currentStats[token].element;
+    }
+
+    function getStrength(uint16 token) external view returns(uint8){
+        return currentStats[token].strength;
+    }
+
+    function getWeakness(uint16 token) external view returns(uint8){
+        return currentStats[token].weakness;
+    }
 }

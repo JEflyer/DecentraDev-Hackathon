@@ -1,14 +1,14 @@
 pragma solidity ^0.8.7;
 
 struct StatsStruct {
-    uint16 health;
+    uint8 health;
 
     uint8 noOfAttacks;
     
-    uint16 attackOneDamage;
+    uint8 attackOneDamage;
     uint8 attackOneEnergyCost;
     
-    uint16 attackTwoDamage;
+    uint8 attackTwoDamage;
     uint8 attackTwoEnergyCost;
     
     uint8 element;//0-10, 11 total elements

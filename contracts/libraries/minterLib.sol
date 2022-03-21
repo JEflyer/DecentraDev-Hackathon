@@ -4,21 +4,9 @@ library MinterLib {
 
     event PriceIncrease(uint newPrice);
 
-    //used for splitting 1 random number into upto 10 different random numbers
-    uint16[] constant primes = [
-        2909,
-        2753,
-        3593,
-        3461.
-        3797,
-        4391,
-        5647,
-        4441,
-        4621,
-        5333,
-    ] 
+    
 
-    function RNG(uint8 length, uint256 rand) internal returns(uint8[] memory random){
+    function RNG(uint8 length, uint256 rand, uint16[] memory primes) internal returns(uint8[] memory random){
         for(uint8 i = 0; i < length; i++){
             random[i] = uint8((rand % primes[i])%150);
         }
@@ -45,7 +33,7 @@ library MinterLib {
     //for example: amount 5, totalSupply 998
     //amountBefore 2, amountAfter 3
     function getAmounts(uint8 _amount, uint16 _totalSupply) internal pure returns(uint8 amountBefore, uint8 amountAfter){
-        for (uint i = 0; i < _amount; i++){
+        for (uint8 i = 0; i < _amount; i++){
             if (crossesThreshold(i+1,_totalSupply)){
                 amountBefore = uint8(i +1);
                 amountAfter = uint8(_amount-amountBefore);
