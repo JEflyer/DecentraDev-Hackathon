@@ -175,7 +175,7 @@ contract Stats is ChainlinkClient{
         return currentStats[token].noOfAttacks;
     }
 
-    function getAttackOneDamage(bool which, uint16 token) external view returns(uint8){
+    function getAttackDamage(bool which, uint16 token) external view returns(uint8){
         if(which){//if true get attack 1 DMG
             return currentStats[token].attackOneDamage;
         } else {

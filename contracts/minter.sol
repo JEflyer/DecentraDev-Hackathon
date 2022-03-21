@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 //import Enumerable extension
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -91,7 +91,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         uint256 _oracleFee,
         address[] memory _to,
         uint16[] memory _shares,
-        uint256 _price,
+        uint256 _price
     ) ERC721("Name","Symbol") VRFConsumerBase(_vrfCoordinator, _linkToken){
         require(_to.length == _shares.length);
         linkToken = _linkToken;
@@ -186,9 +186,9 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     }
 
     function getRandomNumber(uint16[] tokenIds) internal {
-        require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= fee);
+        require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= oracleFee);
         
-        bytes32 requestId = requestRandomness(keyHash, fee);
+        bytes32 requestId = requestRandomness(keyHash, oracleFee);
         mintTo[requestId] = _msgSender();
         requests[requestId] = tokenIds;
     }
@@ -203,7 +203,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
         for(uint8 i =0; i<ids.length; i++){
             _mint(to, ids[i]);
-            emit mint(ids[i]);
+            emit Mint(ids[i]);
             cardType[ids[i]] = randNums[i];
 
         }

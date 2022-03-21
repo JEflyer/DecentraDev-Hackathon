@@ -4,9 +4,7 @@ library MinterLib {
 
     event PriceIncrease(uint newPrice);
 
-    
-
-    function RNG(uint8 length, uint256 rand, uint16[] memory primes) internal returns(uint8[] memory random){
+    function RNG(uint8 length, uint256 rand, uint16[] memory primes) internal pure returns(uint8[] memory random){
         for(uint8 i = 0; i < length; i++){
             random[i] = uint8((rand % primes[i])%150);
         }
@@ -63,7 +61,7 @@ library MinterLib {
         }
     }
 
-    function getTokens(uint8 amount, uint16 totalMinted) internal returns(uint16[] memory tokens){
+    function getTokens(uint8 amount, uint16 totalMinted) internal pure returns(uint16[] memory tokens){
         for(uint8 i = 1; i<= amount; i++){
             tokens[i] = totalMinted + i; 
         }
