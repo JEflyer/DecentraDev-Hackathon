@@ -31,4 +31,9 @@ interface IStats {
     function getBaseStats(uint8 _card) external view returns(StatsStruct memory);
 
     function getCurrentStats(uint16 token) external view returns(StatsStruct memory);
+
+    function upgradeAttackDamage(uint16 token, bool which, uint8 amount)external returns(bool);
+
+    function upgradeHp(uint16 token,uint8 amount) external returns(bool);
+
 }

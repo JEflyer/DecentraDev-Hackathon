@@ -42,8 +42,13 @@ contract Stats is ChainlinkClient{
 
     //for making different calls to the metadata
     string[] private statCategories = [
-        "stuff here",
-        "More stuff"
+        "health",
+        "noOfAttacks",
+        "attackOneDamage",
+        "attackOneEnergyCost",
+        "attackTwoDamage",
+        "attackTwoEnergyCost",
+        "element"
     ];
 
     //define struct for reuest data
@@ -214,17 +219,21 @@ contract Stats is ChainlinkClient{
 
     //upgrade functions
     function upgradeHp(uint16 token,uint8 amount) external onlyGame returns(bool){
+        require(currentStats[token].health + amount <= 255);
         currentStats[token].health += amount;
         currentStats[token].noOfUpgrades +=1;
         return true;
     }
 
     function upgradeAttackDamage(uint16 token, bool which, uint8 amount)external onlyGame returns(bool){
-        currentStats[token].noOfUpgrades +=1;
         if(which) {//attack 1
+            require(currentStats[token].attackOneDamage + amount <= 255);  
+            currentStats[token].noOfUpgrades +=1;
             currentStats[token].attackOneDamage += amount;
             return true;
-        }else {
+        }else {//attack 2
+            require(currentStats[token].attackTwoDamage + amount <= 255);
+            currentStats[token].noOfUpgrades +=1;
             currentStats[token].attackTwoDamage += amount;
             return true;
         }
