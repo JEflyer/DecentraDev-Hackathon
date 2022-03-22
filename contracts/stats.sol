@@ -211,4 +211,23 @@ contract Stats is ChainlinkClient{
     function getCurrentStats(uint16 token) external view returns(StatsStruct memory) {
         return currentStats[token];
     }
+
+    //upgrade functions
+    function upgradeHp(uint16 token,uint8 amount) external onlyGame returns(bool){
+        currentStats[token].health += amount;
+        currentStats[token].noOfUpgrades +=1;
+        return true;
+    }
+
+    function upgradeAttackDamage(uint16 token, bool which, uint8 amount)external onlyGame returns(bool){
+        currentStats[token].noOfUpgrades +=1;
+        if(which) {//attack 1
+            currentStats[token].attackOneDamage += amount;
+            return true;
+        }else {
+            currentStats[token].attackTwoDamage += amount;
+            return true;
+        }
+    }
+
 }

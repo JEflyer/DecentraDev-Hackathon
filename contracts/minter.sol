@@ -20,7 +20,6 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
     event NewAdmin(address newAdmin);
     event PriceIncrease(uint256 newPrice);
-    event Revealed();
     event Mint(uint16 tokenId);
 
     //used for splitting 1 random number into upto 10 different random numbers
@@ -75,9 +74,6 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
     //total amount of mints allowed
     uint16 private totalLimit = 10000;
-    
-    //keeps track of if the NFT image is revealed or not
-    bool private revealed;
 
     //for keeping track of the stat Contract Address
     address private statsAddress;
@@ -103,7 +99,6 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         keyHash = _keyHash;
         oracleFee = _oracleFee;
         active = false;
-        revealed = false;
         admin = _msgSender();
         paymentsTo = _to;
         shares = _shares;
@@ -179,9 +174,6 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
             MinterLib.updatePrice(price);
         }
 
-        if(totalMinted+amount > totalLimit*20/100){
-            revealed = true;
-        }
         for(uint8 i =1; i<=amount; i++){
             totalMinted +=1;
             _mint(msg.sender, totalMinted);
@@ -191,7 +183,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         getRandomNumber(tokens);
     }
 
-    function mintSpecificFor(uint8 amount,uint8[] memory cards, address to) external payable{
+    function mintSpecificFor(uint8 amount,uint8[] memory cards, address to) external payable returns(bool){
         require(amount == cards.length);
         require(active);
         require(amount <=10 && amount >0);
@@ -212,6 +204,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         //send this to stat contract
         bool success = IStats(statsAddress).setBaseStats(ids, cards);
         require(success);
+        return true;
 
     }
 
@@ -263,7 +256,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     function tokenURI(uint16 _tokenId) public view virtual returns(string memory uri){
         require(_exists(_tokenId));
 
-        if(!revealed) {uri = string(abi.encodePacked(baseURI, notRevealed));}
+        if(totalMinted < 2000) {uri = string(abi.encodePacked(baseURI, notRevealed));}
         else{uri = string(abi.encodePacked(baseURI, ciD, string(abi.encodePacked(cardType[_tokenId])), extension));}
 
     }
