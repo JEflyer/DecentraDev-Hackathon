@@ -7,7 +7,6 @@ import "./interfaces/IMinter.sol";
 contract DealMinter{
     
     struct Deal {
-        uint8 amountOfCards;
         uint8[] cards;
         bool active;
     }
@@ -43,7 +42,6 @@ contract DealMinter{
     function addDeal(uint8[] memory cards) external onlyAdmin{
         require(dealNo < 100);
         dealNo +=1;
-        deals[dealNo].amountOfCards = uint8(cards.length);
         deals[dealNo].cards = cards;
         deals[dealNo].active = true;
     }
