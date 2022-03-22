@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 //import stats struct
@@ -101,7 +102,7 @@ contract Stats is ChainlinkClient{
     }
 
     function _callBaseStats(uint8 num) internal {
-        for(uint8 i =0; i< statCategories.length; i++){
+        for(uint8 i =0; i< 7; i++){
             //build request
             Chainlink.Request memory request = buildChainlinkRequest(jobId,address(this),this.fulfill.selector);
             
@@ -201,5 +202,13 @@ contract Stats is ChainlinkClient{
 
     function getWeakness(uint16 token) external view returns(uint8){
         return currentStats[token].weakness;
+    }
+
+    function getBaseStats(uint8 _card) external view returns(StatsStruct memory) {
+        return baseStats[_card];
+    }
+
+    function getCurrentStats(uint16 token) external view returns(StatsStruct memory) {
+        return currentStats[token];
     }
 }

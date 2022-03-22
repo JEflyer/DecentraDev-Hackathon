@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 library MinterLib {
@@ -43,7 +44,7 @@ library MinterLib {
     //gets the price for a given amount, price & current Minted amount
     //checks to see if the amount + current minted amount crosses the a multiple of 1000
     //if so it gets the amounts on each side & calculates the price accordingly
-    function getPrice(uint8 _amount, uint price, uint16 totalMintSupply) internal pure returns(uint256 givenPrice){
+    function getPrice(uint8 _amount, uint16 totalMintSupply, uint price) internal pure returns(uint256 givenPrice){
         require(_amount <= 10, "Err: Too high");
         bool answer = crossesThreshold(_amount,totalMintSupply);
         if(answer){

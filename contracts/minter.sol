@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 //import Enumerable extension
@@ -23,7 +24,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     event Mint(uint16 tokenId);
 
     //used for splitting 1 random number into upto 10 different random numbers
-    uint16[] constant primes = [
+    uint16[] primes = [
         2909,
         2753,
         3593,
@@ -80,6 +81,9 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
     //for keeping track of the stat Contract Address
     address private statsAddress;
+
+    //for keeping track of the deal contract address
+    address private dealAddress;
 
     //tokenId => 0-149 card no.
     mapping(uint16 => uint8) cardType;
@@ -142,12 +146,16 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         statsAddress = _contract;
     }
 
+    function updateDealContract(address _contract) external onlyAdmin{
+        dealAddress = _contract;
+    }
+
     //automatically splits funds between designated wallets
     function splitFunds(uint256 fundsToSplit) public payable {
         uint16 totalShares = MinterLib.totalShares(shares);
 
         for(uint i=0; i<shares.length; i++){
-            require(payable(paymentsTo[i]).transfer(fundsToSplit * shares[i]/totalShares));
+            require(payable(paymentsTo[i]).send(fundsToSplit * shares[i]/totalShares));
         }
     }
 
@@ -165,7 +173,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
         splitFunds(msg.value);
 
-        uint16[] tokens = MinterLib.getTokens(amount, totalMinted);
+        uint16[] memory tokens = MinterLib.getTokens(amount, totalMinted);
 
         if(MinterLib.crossesThreshold(amount, totalMinted)){
             MinterLib.updatePrice(price);
@@ -174,10 +182,37 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         if(totalMinted+amount > totalLimit*20/100){
             revealed = true;
         }
-
-        totalMinted +=amount;
+        for(uint8 i =1; i<=amount; i++){
+            totalMinted +=1;
+            _mint(msg.sender, totalMinted);
+            emit Mint(totalMinted);
+        }
 
         getRandomNumber(tokens);
+    }
+
+    function mintSpecificFor(uint8 amount,uint8[] memory cards, address to) external payable{
+        require(amount == cards.length);
+        require(active);
+        require(amount <=10 && amount >0);
+        require(amount +totalMinted <= totalLimit);
+        require(msg.value == getPrice(amount));
+        require(msg.sender == dealAddress);
+
+        uint16[] memory ids;
+        for(uint8 i =0; i<cards.length; i++){
+            totalMinted +=1;
+            ids[i] = totalMinted;
+            _mint(to, cards[i]);
+            emit Mint(cards[i]);
+            cardType[totalMinted] = cards[i];
+
+        }
+
+        //send this to stat contract
+        bool success = IStats(statsAddress).setBaseStats(ids, cards);
+        require(success);
+
     }
 
     function rawFulfillRandomness(bytes32 requestId, uint256 randomness) external override{
@@ -185,7 +220,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         fulfillRandomness(requestId, randomness);
     }
 
-    function getRandomNumber(uint16[] tokenIds) internal {
+    function getRandomNumber(uint16[] memory tokenIds) internal {
         require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= oracleFee);
         
         bytes32 requestId = requestRandomness(keyHash, oracleFee);
@@ -196,14 +231,12 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
    
 
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-        uint16[] ids = requests[requestId];
+        uint16[] memory ids = requests[requestId];
         address to = mintTo[requestId];
     
-        uint8[ids.length] randNums = MinterLib.RNG(ids.length, randomness, primes);
+        uint8[] memory randNums = MinterLib.RNG(uint8(ids.length), randomness, primes);
 
         for(uint8 i =0; i<ids.length; i++){
-            _mint(to, ids[i]);
-            emit Mint(ids[i]);
             cardType[ids[i]] = randNums[i];
 
         }
@@ -251,5 +284,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     function setExt(string memory _ext) external onlyAdmin {
         extension = _ext;
     }
+
+
 
 }
