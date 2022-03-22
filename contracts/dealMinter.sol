@@ -6,6 +6,7 @@ import "./interfaces/IMinter.sol";
 
 contract DealMinter{
     
+    //for keeping track of the cards that can be minted in a particular deal & whether or not the deal is still active
     struct Deal {
         uint8[] cards;
         bool active;
@@ -20,6 +21,7 @@ contract DealMinter{
     //store dealNo. => Deal
     mapping(uint8 => Deal) private deals;
 
+    //keeps a track of the current deal number
     uint8 private dealNo;
 
     constructor(
@@ -35,10 +37,12 @@ contract DealMinter{
         _;
     }
 
+    //allows the admin to update the minter contract address
     function updateMinter(address _new) external onlyAdmin{
         minter = _new;
     }
 
+    //allows the admin to add a new set of cards as mintable
     function addDeal(uint8[] memory cards) external onlyAdmin{
         require(dealNo < 100);
         dealNo +=1;
@@ -46,10 +50,12 @@ contract DealMinter{
         deals[dealNo].active = true;
     }
 
+    //allows the admin to end a deal
     function endDeal(uint8 _dealNo) external onlyAdmin{
         deals[_dealNo].active = false;
     }
 
+    //allows a used to buy a specific set of cards
     function buyDeal(uint8 _dealNo) external payable {
         require(_dealNo <= dealNo && _dealNo > 0);
         require(deals[_dealNo].active == true);

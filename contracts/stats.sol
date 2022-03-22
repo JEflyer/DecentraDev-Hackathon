@@ -15,9 +15,8 @@ contract Stats is ChainlinkClient{
     event StatChange(string stat, uint difference);
     event NewAdmin(address newAdmin);
 
-    using Chainlink for Chainlink.Request;
-
     //oracle vars
+    using Chainlink for Chainlink.Request;
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
@@ -92,20 +91,24 @@ contract Stats is ChainlinkClient{
         _;
     }
 
+    //assigns the basestat to a given id, this function can only be called by the minter contract
     function setBaseStats(uint16[] memory ids, uint8[] memory rands) external onlyMinter returns(bool){
         for(uint i = 0; i< ids.length; i++){
             currentStats[ids[i]] = baseStats[rands[i]];
             card[ids[i]] = rands[i];
         }
         return true;
+
     }
 
+    //initiates the gathering of the stats from the metadata
     function callBaseStats(uint8 from, uint8 to) external onlyAdmin{
         for(uint8 i = from; i<= to; i++){
             _callBaseStats(i);
         }
     }
 
+    //builds & sends the API calls to retrieve the data from the metadata
     function _callBaseStats(uint8 num) internal {
         for(uint8 i =0; i< 7; i++){
             //build request
@@ -128,6 +131,7 @@ contract Stats is ChainlinkClient{
         }
     }
 
+    //this function will be finding out what request it is dealing with & complete accordingly
     function fulfill(bytes32 _requestId, uint8 _stat) public recordChainlinkFulfillment(_requestId){
         data memory info = requests[_requestId];
         
@@ -160,14 +164,17 @@ contract Stats is ChainlinkClient{
         }
     }
 
+    //allows the admin to update the admin address
     function updateAdmin(address _admin) external onlyAdmin {
         admin = _admin;
     }
 
+    //allows the admin to update the game contract address
     function updateGameContract(address _game) external onlyAdmin {
         game = _game;
     }
 
+    //allows the admin to update the minter contract address
     function updateMinterContract(address _minter) external onlyAdmin {
         minter = _minter;
     }
@@ -184,7 +191,7 @@ contract Stats is ChainlinkClient{
     function getAttackDamage(bool which, uint16 token) external view returns(uint8){
         if(which){//if true get attack 1 DMG
             return currentStats[token].attackOneDamage;
-        } else {
+        } else {//if false get attack 2 DMG
             return currentStats[token].attackTwoDamage;
         }
     }
@@ -192,7 +199,7 @@ contract Stats is ChainlinkClient{
     function getAttackEnergyCost(bool which, uint16 token) external view returns (uint8){
         if(which){//if true get attack 1 EC
             return currentStats[token].attackOneEnergyCost;
-        }else{
+        }else{//if false get attack 2 EC
             return currentStats[token].attackTwoEnergyCost;
         }
     }
@@ -212,12 +219,11 @@ contract Stats is ChainlinkClient{
     function getBaseStats(uint8 _card) external view returns(StatsStruct memory) {
         return baseStats[_card];
     }
-
     function getCurrentStats(uint16 token) external view returns(StatsStruct memory) {
         return currentStats[token];
     }
 
-    //upgrade functions
+    //upgrade function that allows the game contract to update HP aslong as the hp has not already reached the max value
     function upgradeHp(uint16 token,uint8 amount) external onlyGame returns(bool){
         require(currentStats[token].health + amount <= 255);
         currentStats[token].health += amount;
@@ -225,6 +231,7 @@ contract Stats is ChainlinkClient{
         return true;
     }
 
+    //upgrade function that allows the game contract to update HP aslong as the attack 1 or 2 DMG has not already reached the max value
     function upgradeAttackDamage(uint16 token, bool which, uint8 amount)external onlyGame returns(bool){
         if(which) {//attack 1
             require(currentStats[token].attackOneDamage + amount <= 255);  

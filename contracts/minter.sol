@@ -42,7 +42,6 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
     //keeps track of permissioned wallet & the admin
     address private admin;
-    address private permissionedWallet;
 
     //keeps track of the price 
     uint256 private price;
@@ -111,36 +110,34 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         _;
     }
 
-    //allow only permissioned or admin
-    modifier onlyAllowed{
-        require(_msgSender() == admin || _msgSender() == permissionedWallet);
-        _;
-    }
-
+    //pause & unpause the minting on demand
     function flipSaleState() external onlyAdmin {
         active = !active;
     }
 
-    //change admin wallet
+    //allow admin to change admin wallet
     function updateAdmin(address _new) external onlyAdmin{
         admin = _new;
     }
 
-    //update payments
+    //allow the admin to update the payments & shares
     function updatePayments(address[] memory _to, uint16[] memory _shares) external onlyAdmin {
         require(_to.length == _shares.length);
         paymentsTo = _to;
         shares = _shares;
     }
 
+    //calls the minter library & calculates the price
     function getPrice(uint8 amount) public view returns(uint256){
         return MinterLib.getPrice(amount, totalMinted, price);
     }
 
+    //allows the admin to update the stat contract address
     function updateStatsContract(address _contract) external onlyAdmin {
         statsAddress = _contract;
     }
 
+    //allows the admin to update the deal contract address
     function updateDealContract(address _contract) external onlyAdmin{
         dealAddress = _contract;
     }
@@ -159,6 +156,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         splitFunds(msg.value);
     }
 
+    //no, you don't get a description
     function mint(uint8 amount) external payable{
         require(active);
         require(amount <=10 && amount >0);
@@ -183,6 +181,7 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
         getRandomNumber(tokens);
     }
 
+    //this function calls with a preassignd set of cards, this function can only be called by the deals contract
     function mintSpecificFor(uint8 amount,uint8[] memory cards, address to) external payable returns(bool){
         require(amount == cards.length);
         require(active);
@@ -208,11 +207,13 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
     }
 
+    //this function is the first function that is called by the oracle after a random number request has been made
     function rawFulfillRandomness(bytes32 requestId, uint256 randomness) external override{
         require(_msgSender() == vrfCoordinator, "Only VRFCoordinator can fulfill");
         fulfillRandomness(requestId, randomness);
     }
 
+    //our internal function for making the request & storing the data required for the function return
     function getRandomNumber(uint16[] memory tokenIds) internal {
         require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= oracleFee);
         
@@ -222,7 +223,8 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
     }
 
    
-
+    //first we gather the information from before our request
+    //then we use the library function RNG to split 1 random number into ids.length^th of times
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         uint16[] memory ids = requests[requestId];
         address to = mintTo[requestId];
@@ -261,23 +263,24 @@ contract Minter is ERC721Enumerable, VRFConsumerBase {
 
     }
 
-
+    //allows the admin to change the base URI
     function setBase(string memory _base) external onlyAdmin {
         baseURI = _base;
     }
 
+    //allows the admin to change the CID hash
     function setCID(string memory _ciD) external onlyAdmin {
         ciD = _ciD;
     }
 
+    //allows the admin to change the notRevealed hash
     function setNot(string memory _not) external onlyAdmin {
         notRevealed = _not;
     }
 
+    //allows the admin to change the extension default ".JSON"
     function setExt(string memory _ext) external onlyAdmin {
         extension = _ext;
     }
-
-
 
 }

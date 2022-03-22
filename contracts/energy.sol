@@ -11,11 +11,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./libraries/energyLib.sol";
 
 // initialize our contract
-
 contract EnergyCards is ERC1155, Ownable {
 
   // currentMinted mapping for tokenIDs
-
   mapping (uint256 => uint256) private currentMinted;
 
   //as it says on the tin
@@ -23,14 +21,12 @@ contract EnergyCards is ERC1155, Ownable {
   uint16[] private shares;
 
   // pause or unpause contract
-
   bool public paused = false;
 
   //keeps track of the price
   uint256 private price;
 
   // set TokenIds
-
   uint8 public constant Fire = 1;
   uint8 public constant Water = 2;
   uint8 public constant Electric = 3;
@@ -41,7 +37,6 @@ contract EnergyCards is ERC1155, Ownable {
   uint8 public constant Poison = 8;
 
   // constructor
-
   constructor(
     uint16[] memory _shares,
     address[] memory _paymentsTo,
@@ -55,21 +50,24 @@ contract EnergyCards is ERC1155, Ownable {
 
   // only owner functions
 
-  //update payments
+  //allows the admin to change the addresses being paid & the shares being paid out
   function updatePayments(address[] memory _to, uint16[] memory _shares) external onlyOwner {
     require(_to.length == _shares.length);
     paymentsTo = _to;
     shares = _shares;
   }
 
+  //allows the admin to pause or unpause the contract
   function pause(bool _state) public onlyOwner {
     paused = _state;
   }
 
+  //allows the admin to change the URI/CID hash
   function setUri(string memory newUri) public onlyOwner {
     _setURI(newUri);
   }
 
+  //mint a energy card
   function mint(address _to, uint256 _tokenID, uint256 _amount) public payable {
     require(!paused, "Contract is currently paused"); // Checks to make sure contract isnt paused
     require(_amount > 0, "You must enter an amount to mint");
@@ -81,6 +79,8 @@ contract EnergyCards is ERC1155, Ownable {
     _mint(_to, _tokenID, _amount, "");
   }
 
+  //mint multiple energy cards but with mixed amounts & ids
+  //this mint still has a max of 10 mints
   function mintBatch(address _to, uint256[] memory _tokenIDs, uint256[] memory _amounts) public payable {
     require(!paused, "Contract is currently paused");
     uint8 sum = energyLib.sum(_amounts);
