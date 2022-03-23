@@ -1,7 +1,9 @@
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 library statsLib {
 
+    //for a given stat this function returns the element it is strong against
     function getStrength(uint8 _stat) internal pure returns(uint8 stat){
         if(_stat == 0){//Fire
             stat = 4;
@@ -29,6 +31,7 @@ library statsLib {
         }
     }
 
+    //for a given stat this function returns the stat it is weakest against
     function getWeakness(uint _stat) internal pure returns(uint8 stat){
         if(_stat == 0){//Fire
             stat = 1;

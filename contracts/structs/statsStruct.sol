@@ -12,9 +12,9 @@ struct StatsStruct {
     uint8 attackTwoDamage;
     uint8 attackTwoEnergyCost;
     
-    uint8 element;//0-10, 11 total elements
-    uint8 strength;//2x more effective against
-    uint8 weakness;//50% less effective against
+    uint8 element;//0-7, 8 total elements
+    uint8 strength;
+    uint8 weakness;
     
     uint16 noOfUpgrades;
 }
