@@ -58,4 +58,36 @@ library GameLib {
         }
 
     }
+    
+    //this is bugged, no track for cards already in the player hand - STILL TO DO
+    function getHand(uint16[20] memory cards, uint16[] memory rand) internal pure returns(uint16[] memory hand){
+        for(uint8 i=0; i< rand.length; i++){
+            hand[i] = cards[rand[i] %20];
+        }
+    }
+
+    //bugged the same as above - STILL TO DO
+    function getEnergy(uint8[10] memory cards, uint16[] memory rand) internal pure returns(uint8[] memory hand){
+        for(uint8 i =0; i<4; i++) {
+            hand[i] = cards[rand[i] %10];
+        }
+    }
+
+    function getDeck(uint16[20] memory cards, uint16[] memory hand) internal pure returns(uint16[] memory deck) {
+        bool check;
+        uint8 counter;
+        for(uint8 i = 0; i< cards.length; i++){
+            if(check){check = false;}
+            for(uint8 j =0; j < hand.length; j++){
+                if(cards[i] == hand[j]){
+                    check = true;
+                }
+            }
+            if(!check){
+                deck[counter] = cards[i];
+                counter +=1;
+            }
+
+        }
+    }
 }

@@ -247,6 +247,11 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         if(order[requestId] == 1) {
             uint256 _gameId = requests2GameId[requestId];
             gameVariables[_gameId].currentTurn = uint8((randomness % 2)+1);
+            uint16[] memory rand = GameLib.expand(randomness, primes);
+            cardsPlayed[_gameId].player1Hand = GameLib.getHand(gameVariables[_gameId].p1Cards, rand);
+            cardsPlayed[_gameId].player2Hand = GameLib.getHand(gameVariables[_gameId].p2Cards, rand);
+            cardsPlayed[_gameId].player1HeldEnergy = GameLib.getEnergy(gameVariables[_gameId].p1Energy, rand);
+            cardsPlayed[_gameId].player2HeldEnergy = GameLib.getEnergy(gameVariables[_gameId].p2Energy, rand);
         }
         if(order[requestId] == 2){
             uint256 _gameId = requests2GameId[requestId];
