@@ -7,10 +7,8 @@ struct StatsStruct {
     uint8 noOfAttacks;
     
     uint8 attackOneDamage;
-    uint8 attackOneEnergyCost;
     
     uint8 attackTwoDamage;
-    uint8 attackTwoEnergyCost;
     
     uint8 element;//0-7, 8 total elements
     uint8 strength;
