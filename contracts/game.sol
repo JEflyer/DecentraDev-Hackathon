@@ -51,6 +51,8 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         uint16[] player2KnockOut;
         uint8[] player1HeldEnergy;
         uint8[] player2HeldEnergy;
+        uint8[] player1DeckEnergy;
+        uint8[] player2DeckEnergy;
         uint16[] player1PlayedCards;
         uint8[] player1AssignedEnergy;
         uint8[] player2AssignedEnergy;
@@ -187,9 +189,40 @@ contract game is VRFConsumerBase, ReentrancyGuard{
     //the player must be able to choose a card to place into the main fight section or on the bench
     //the player must be able to choose what attack they will use
     //the player must be able to choose if they wants to skip an attack
+    //how to do multiple actions with limited variables
+    //First we need to check whether a player wants to complete an action, this could be done with 
+    //a bool[] true for if action was completed false otherwise
+    //then we need to check what card that action was happening to this could be using a uint8[] where the index is equal to the index of the bool[]
+    //then we need to check what attack is being used, we ca use a uint8 for this, 0 = no attack, 1= attack1, 2 = attack2
     function takeTurn(
-        uint256 _gameId
+        uint256 _gameId,
+        bool[] memory actions,
+        uint8[] memory commands,
+        uint8 attack
     ) external {
+        for(uint8 i=0; i< actions.length; i++){
+            if(actions[i]){
+
+                if(i == 0){//place monster card - auto choose whether on bench or main
+                    
+                }
+                if(i == 1){//switch monster card between main to bench
+                    
+                }
+                if(i == 2){//place energy card
+                    
+                }
+                if(i == 3){//switch energy card from one card to another card
+                    
+                }
+                if(i == 4){//attack
+                    
+                }
+
+
+
+            }
+        }
 
     }
 
@@ -198,6 +231,11 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         uint16[] memory rand
     ) internal {
 
+        //choose the card from the deck & assign to the players hand
+
+        //choose 1 energy from the energyDeck & assign to player
+
+        //anything else?
     }
 
 
@@ -252,6 +290,8 @@ contract game is VRFConsumerBase, ReentrancyGuard{
             cardsPlayed[_gameId].player2Hand = GameLib.getHand(gameVariables[_gameId].p2Cards, rand);
             cardsPlayed[_gameId].player1HeldEnergy = GameLib.getEnergy(gameVariables[_gameId].p1Energy, rand);
             cardsPlayed[_gameId].player2HeldEnergy = GameLib.getEnergy(gameVariables[_gameId].p2Energy, rand);
+            cardsPlayed[_gameId].player1DeckEnergy = GameLib.getDeckEnergy(gameVariables[_gameId].p1Energy, cardsPlayed[_gameId].player1HeldEnergy);
+            cardsPlayed[_gameId].player2DeckEnergy = GameLib.getDeckEnergy(gameVariables[_gameId].p2Energy, cardsPlayed[_gameId].player2HeldEnergy);
         }
         if(order[requestId] == 2){
             uint256 _gameId = requests2GameId[requestId];
