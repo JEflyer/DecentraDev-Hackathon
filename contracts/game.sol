@@ -50,11 +50,12 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         uint16[] player2Deck;
         uint16[] player1KnockOut;
         uint16[] player2KnockOut;
+        uint16[] player1PlayedCards;
+        uint16[] player2PlayedCards;
         uint8[] player1HeldEnergy;
         uint8[] player2HeldEnergy;
         uint8[] player1DeckEnergy;
         uint8[] player2DeckEnergy;
-        uint16[] player1PlayedCards;
         uint8[] player1AssignedEnergy;
         uint8[] player2AssignedEnergy;
     }
@@ -219,44 +220,120 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         for(uint8 i=0; i< actions.length; i++){
             if(actions[i]){
                 if(i == 0){//place monster card - auto choose whether on bench or main
-                    commands[i]//index of the monster card in hands being placed
+                    //commands[i] is the index of the monster card in hands being placed
                     if(player){//player1
+                        //insert chosen card into played cards
+                        cardsPlayed[_gameId].player1PlayedCards = GameLib.getNewPlayedCards(
+                            cardsPlayed[_gameId].player1PlayedCards, 
+                            cardsPlayed[_gameId].player1Hand[commands[i]]
+                            );
+
+                        //remove chosen card from hand
+                        cardsPlayed[_gameId].player1Hand = GameLib.getNewHandMinus(
+                            cardsPlayed[_gameId].player1Hand,
+                            commands[i]
+                        );
 
                     }else {//player2
+                        //insert chosen card into played cards
+                        cardsPlayed[_gameId].player2PlayedCards = GameLib.getNewPlayedCards(
+                            cardsPlayed[_gameId].player2PlayedCards, 
+                            cardsPlayed[_gameId].player2Hand[commands[i]]
+                            );
 
+                        //remove chosen card from hand
+                        cardsPlayed[_gameId].player2Hand = GameLib.getNewHandMinus(
+                            cardsPlayed[_gameId].player2Hand,
+                            commands[i]
+                        );
                     }
                 }
                 if(i == 1){//switch monster card between main to bench
-                    commands[i]//the index of the card on bench beign switched to main position
+                    //commands[i] is the index of the card on bench beign switched to main position
                     if(player){//player1
+                        cardsPlayed[_gameId].player1PlayedCards = GameLib.switchCard(
+                            cardsPlayed[_gameId].player1PlayedCards,
+                            commands[i]
+                        );
+
+                        //reorganise the energy array
+
 
                     }else {//player2
+                        cardsPlayed[_gameId].player2PlayedCards = GameLib.switchCard(
+                            cardsPlayed[_gameId].player2PlayedCards,
+                            commands[i]
+                        );
+
+                        //reorganise the energy array
 
                     }
                 }
                 if(i == 2){//place energy card
-                    commands[i]//the index of the card in energy hand being placed
-                    commands[5]//the index of the card on field having the energy attached 
+                    //commands[i] is the index of the card in energy hand being placed
+                    //commands[5] is the index of the card on field having the energy attached 
                     if(player){//player1
+                        //assign energy to card
+                        cardsPlayed[_gameId].player1AssignedEnergy = GameLib.AssignEnergy(
+                            commands[5],
+                            commands[i],
+                            cardsPlayed[_gameId].player1AssignedEnergy
+                        );
+
+                        //remove card from the held energy
+                        cardsPlayed[_gameId].player1HeldEnergy = GameLib.RemoveEnergy(
+                            commands[i],
+                            cardsPlayed[_gameId].player1HeldEnergy
+                        );
 
                     }else {//player2
+                        //assign energy to card
+                        cardsPlayed[_gameId].player2AssignedEnergy = GameLib.AssignEnergy(
+                            commands[5],
+                            commands[i],
+                            cardsPlayed[_gameId].player2AssignedEnergy
+                        );
 
+                        //remove card from the held energy
+                        cardsPlayed[_gameId].player2HeldEnergy = GameLib.RemoveEnergy(
+                            commands[i],
+                            cardsPlayed[_gameId].player2HeldEnergy
+                        );
                     }
                 }
                 if(i == 3){//switch energy card from one card to another card
-                    commands[i]//the index of the card having the energy removed
+                    //commands[i] is the index of the card having the energy removed
+                    //commands[6] is the index of the card having the energy added to
                     if(player){//player1
-
+                        //change energy count for relevant cards
+                        cardsPlayed[_gameId].player1AssignedEnergy = GameLib.changeEnergy(
+                            commands[i],
+                            commands[6],
+                            cardsPlayed[_gameId].player1AssignedEnergy
+                        );
                     }else {//player2
-
+                        //change energy count for relevant cards
+                        cardsPlayed[_gameId].player2AssignedEnergy = GameLib.changeEnergy(
+                            commands[i],
+                            commands[6],
+                            cardsPlayed[_gameId].player2AssignedEnergy
+                        );
                     }
                 }
                 if(i == 4){//attack
-                    commands[i]//this will either be 0 - no attack, 1 - attack1, 2 - attack2 
+                    //commands[i] is this will either be 0 - no attack, 1 - attack1, 2 - attack2 
                     if(player){//player1
+                        //get attack stat for attacking card
 
+                        //find out attack factor
+
+                        //adjust current health stat for attacked card
                     }else {//player2
+                        //get attack stat for attacking card
 
+                        //find out attack factor
+
+                        //adjust current health stat for attacked card
                     }
                 }
 
@@ -293,27 +370,27 @@ contract game is VRFConsumerBase, ReentrancyGuard{
             uint8 chosenCardIndex = rand[1] % cardsPlayed[_gameId].player1Deck.length;
             uint16 chosenCard = cardsPlayed[_gameId].player1Deck[chosenCardIndex];
 
-            cardsPlayes[_gameId].player1Deck = GameLib.getNewDeck(cardsPlayed[_gameId].player1Deck,chosenCardIndex);
+            cardsPlayed[_gameId].player1Deck = GameLib.getNewDeck(cardsPlayed[_gameId].player1Deck,chosenCardIndex);
             cardsPlayed[_gameId].player1Hand = GameLib.getNewHand(cardsPlayed[_gameId].player1Hand,chosenCard);
 
             //choose 1 energy from the energyDeck & assign to player
             uint8 chosenEnergyIndex = rand[2] % cardsPlayed[_gameId].player1DeckEnergy.length;
             uint8 chosenEnergy = cardsPlayed[_gameId].player1Deck[chosenEnergyIndex];
             cardsPlayed[_gameId].player1HeldEnergy = GameLib.getNewEnergyHand(cardsPlayed[_gameId].player1HeldEnergy, chosenEnergy);
-            cardsPlayed[_gameID].player1DeckEnergy = GameLib.getNewEnergyDeck(cardsPlayed[_gameId].player1DeckEnergy, chosenEnergyIndex);
+            cardsPlayed[_gameId].player1DeckEnergy = GameLib.getNewEnergyDeck(cardsPlayed[_gameId].player1DeckEnergy, chosenEnergyIndex);
         } else {
             //choose the card from the deck & assign to the players hand - p2
             uint8 chosenCardIndex = rand[1] % cardsPlayed[_gameId].player2Deck.length;
             uint16 chosenCard = cardsPlayed[_gameId].player2Deck[chosenCardIndex];
 
-            cardsPlayes[_gameId].player2Deck = GameLib.getNewDeck(cardsPlayed[_gameId].player2Deck,chosenCardIndex);
+            cardsPlayed[_gameId].player2Deck = GameLib.getNewDeck(cardsPlayed[_gameId].player2Deck,chosenCardIndex);
             cardsPlayed[_gameId].player2Hand = GameLib.getNewHand(cardsPlayed[_gameId].player2Hand,chosenCard);
 
             //choose 1 energy from the energyDeck & assign to player
             uint8 chosenEnergyIndex = rand[2] % cardsPlayed[_gameId].player2DeckEnergy.length;
             uint8 chosenEnergy = cardsPlayed[_gameId].player2Deck[chosenEnergyIndex];
             cardsPlayed[_gameId].player2HeldEnergy = GameLib.getNewEnergyHand(cardsPlayed[_gameId].player2HeldEnergy, chosenEnergy);
-            cardsPlayed[_gameID].player2DeckEnergy = GameLib.getNewEnergyDeck(cardsPlayed[_gameId].player2DeckEnergy, chosenEnergyIndex);
+            cardsPlayed[_gameId].player2DeckEnergy = GameLib.getNewEnergyDeck(cardsPlayed[_gameId].player2DeckEnergy, chosenEnergyIndex);
         }
 
         
