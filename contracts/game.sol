@@ -197,35 +197,73 @@ contract game is VRFConsumerBase, ReentrancyGuard{
     function takeTurn(
         uint256 _gameId,
         bool[] memory actions,
-        uint8[] memory commands,
-        uint8 attack
+        uint8[] memory commands
     ) external {
+        bool player;//false/0 means msg.sender == player1, true/1 means msg.sender == player2
+        //check that for gameId it is msg.sender's turn
+        if(gameVariables[_gameId].player1 == msg.sender){
+            require(gameVariables[_gameId].currentTurn == 1);
+            player = false;
+        } else if(gameVariables[_gameId].player2 == msg.sender){
+            require(gameVariables[_gameId].currentTurn == 2);
+            player = true;
+        }else {
+            revert();
+        }
+
+        //take actions
         for(uint8 i=0; i< actions.length; i++){
             if(actions[i]){
-
                 if(i == 0){//place monster card - auto choose whether on bench or main
-                    
+                    commands[i]//index of the monster card in hands being placed
+                    if(player){//player1
+
+                    }else {//player2
+
+                    }
                 }
                 if(i == 1){//switch monster card between main to bench
-                    
+                    commands[i]//the index of the card on bench beign switched to main position
+                    if(player){//player1
+
+                    }else {//player2
+
+                    }
                 }
                 if(i == 2){//place energy card
-                    
+                    commands[i]//the index of the card in energy hand being placed
+                    commands[5]//the index of the card on field having the energy attached 
+                    if(player){//player1
+
+                    }else {//player2
+
+                    }
                 }
                 if(i == 3){//switch energy card from one card to another card
-                    
+                    commands[i]//the index of the card having the energy removed
+                    if(player){//player1
+
+                    }else {//player2
+
+                    }
                 }
                 if(i == 4){//attack
-                    
+                    commands[i]//this will either be 0 - no attack, 1 - attack1, 2 - attack2 
+                    if(player){//player1
+
+                    }else {//player2
+
+                    }
                 }
 
-
-
+                //VRF Request
+                getRandForTurn(_gameId);
             }
         }
 
     }
 
+    //this function is used for preturn actions
     function setupTurn(
         uint256 _gameId,
         uint16[] memory rand
@@ -235,18 +273,23 @@ contract game is VRFConsumerBase, ReentrancyGuard{
 
         //choose 1 energy from the energyDeck & assign to player
 
-        //anything else?
+        //open turn for the next player 
     }
 
 
     //surrender function to allow games to be quit mid game aslong as 1 side wants to quit, the opponent is by default the winner
     function surrender(uint256 _gameId) external {
-
+        if(msg.sender == gameVariables[_gameId].player1){
+            //register the user that wants to surrender
+        }
+        if(msg.sender == gameVariables[_gameId].player2){
+            //register the user that wants to surrender
+        }
     }
 
     //split funds between winner & community wallet
-    function split(uint256 _gameId) external {
-
+    function split(uint256 _gameId) internal payable {
+        //calclulates the split 95% to winner, 5% to a community wallet
     }
 
     //vrf request for random number
@@ -258,6 +301,7 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         order[requestId] = 1;
     }
 
+    //turn end VRF call
     function getRandForTurn(uint256 _gameId) internal {
         require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= oracleFee);
         
@@ -266,6 +310,7 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         order[requestId] = 2;
     }
     
+    //game end VRF call
     function getRandForWinner(uint256 _gameId, address winner) internal {
         require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= oracleFee);
         
@@ -281,6 +326,7 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         fulfillRandomness(requestId, randomness);
     }
 
+    //this function is called by the VRF oracle & the job will be completed according to the order set
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         if(order[requestId] == 1) {
             uint256 _gameId = requests2GameId[requestId];
@@ -312,11 +358,5 @@ contract game is VRFConsumerBase, ReentrancyGuard{
                 GameLib.upgradeCard(card,stats,choice,choice2);
             }
         }
-        else{
-            "We've got a fookin problem";
-        }
     }
-
-
-
 }
