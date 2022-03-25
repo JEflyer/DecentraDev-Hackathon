@@ -40,6 +40,7 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         bool openForPlayer2;
         bool active;
         uint8 currentTurn;// 0 = inactive, 1 = p1, 2 = p2
+        bool open;
     }
 
     struct playedCards {
@@ -199,6 +200,9 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         bool[] memory actions,
         uint8[] memory commands
     ) external {
+        //check that the game is open to having a turn submitted
+        require(gameVariables[_gameId].open);
+
         bool player;//false/0 means msg.sender == player1, true/1 means msg.sender == player2
         //check that for gameId it is msg.sender's turn
         if(gameVariables[_gameId].player1 == msg.sender){
@@ -263,17 +267,60 @@ contract game is VRFConsumerBase, ReentrancyGuard{
 
     }
 
+    // struct playedCards {
+    //     uint16[] player1Hand;
+    //     uint16[] player1Deck;
+    //     uint16[] player2Hand;
+    //     uint16[] player2Deck;
+    //     uint16[] player1KnockOut;
+    //     uint16[] player2KnockOut;
+    //     uint8[] player1HeldEnergy;
+    //     uint8[] player2HeldEnergy;
+    //     uint8[] player1DeckEnergy;
+    //     uint8[] player2DeckEnergy;
+    //     uint16[] player1PlayedCards;
+    //     uint8[] player1AssignedEnergy;
+    //     uint8[] player2AssignedEnergy;
+    // }
+
     //this function is used for preturn actions
     function setupTurn(
         uint256 _gameId,
         uint16[] memory rand
     ) internal {
+        if(gameVariables[_gameId].currentTurn == 1){
+            //choose the card from the deck & assign to the players hand - p1
+            uint8 chosenCardIndex = rand[1] % cardsPlayed[_gameId].player1Deck.length;
+            uint16 chosenCard = cardsPlayed[_gameId].player1Deck[chosenCardIndex];
 
-        //choose the card from the deck & assign to the players hand
+            cardsPlayes[_gameId].player1Deck = GameLib.getNewDeck(cardsPlayed[_gameId].player1Deck,chosenCardIndex);
+            cardsPlayed[_gameId].player1Hand = GameLib.getNewHand(cardsPlayed[_gameId].player1Hand,chosenCard);
 
-        //choose 1 energy from the energyDeck & assign to player
+            //choose 1 energy from the energyDeck & assign to player
+            uint8 chosenEnergyIndex = rand[2] % cardsPlayed[_gameId].player1DeckEnergy.length;
+            uint8 chosenEnergy = cardsPlayed[_gameId].player1Deck[chosenEnergyIndex];
+            cardsPlayed[_gameId].player1HeldEnergy = GameLib.getNewEnergyHand(cardsPlayed[_gameId].player1HeldEnergy, chosenEnergy);
+            cardsPlayed[_gameID].player1DeckEnergy = GameLib.getNewEnergyDeck(cardsPlayed[_gameId].player1DeckEnergy, chosenEnergyIndex);
+        } else {
+            //choose the card from the deck & assign to the players hand - p2
+            uint8 chosenCardIndex = rand[1] % cardsPlayed[_gameId].player2Deck.length;
+            uint16 chosenCard = cardsPlayed[_gameId].player2Deck[chosenCardIndex];
+
+            cardsPlayes[_gameId].player2Deck = GameLib.getNewDeck(cardsPlayed[_gameId].player2Deck,chosenCardIndex);
+            cardsPlayed[_gameId].player2Hand = GameLib.getNewHand(cardsPlayed[_gameId].player2Hand,chosenCard);
+
+            //choose 1 energy from the energyDeck & assign to player
+            uint8 chosenEnergyIndex = rand[2] % cardsPlayed[_gameId].player2DeckEnergy.length;
+            uint8 chosenEnergy = cardsPlayed[_gameId].player2Deck[chosenEnergyIndex];
+            cardsPlayed[_gameId].player2HeldEnergy = GameLib.getNewEnergyHand(cardsPlayed[_gameId].player2HeldEnergy, chosenEnergy);
+            cardsPlayed[_gameID].player2DeckEnergy = GameLib.getNewEnergyDeck(cardsPlayed[_gameId].player2DeckEnergy, chosenEnergyIndex);
+        }
+
+        
 
         //open turn for the next player 
+        gameVariables[_gameId].open = true;
+
     }
 
 
@@ -281,15 +328,25 @@ contract game is VRFConsumerBase, ReentrancyGuard{
     function surrender(uint256 _gameId) external {
         if(msg.sender == gameVariables[_gameId].player1){
             //register the user that wants to surrender
+            gameVariables[_gameId].active = false;
+            split(_gameId, gameVariables[_gameId].player2);
+            
         }
-        if(msg.sender == gameVariables[_gameId].player2){
+        else if(msg.sender == gameVariables[_gameId].player2){
+            gameVariables[_gameId].active = false;
+            split(_gameId, gameVariables[_gameId].player1);
             //register the user that wants to surrender
+        } else {
+            revert();
         }
     }
 
     //split funds between winner & community wallet
-    function split(uint256 _gameId) internal payable {
+    function split(uint256 _gameId, address winner) internal payable {
         //calclulates the split 95% to winner, 5% to a community wallet
+        (uint256 _winnerPayout, uint256 _communityPayout) = GameLib.getPayouts(gameVariables[_gameId].pot);
+        payable(winner).transfer(_winnerPayout);
+        payable(community).transfer(_communityPayout);
     }
 
     //vrf request for random number
@@ -306,6 +363,7 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         require(LinkTokenInterface(linkToken).balanceOf(address(this)) >= oracleFee);
         
         bytes32 requestId = requestRandomness(keyHash, oracleFee);
+        gameVariables[_gameId].open = false;
         requests2GameId[requestId] = _gameId;
         order[requestId] = 2;
     }
@@ -318,6 +376,8 @@ contract game is VRFConsumerBase, ReentrancyGuard{
         requests[requestId]._gameId = _gameId;
         requests[requestId].winner = winner;
         order[requestId] = 3;
+        gameVariables[_gameId].open = false;
+        
     }
 
     //this function is the first function that is called by the oracle after a random number request has been made
@@ -338,6 +398,7 @@ contract game is VRFConsumerBase, ReentrancyGuard{
             cardsPlayed[_gameId].player2HeldEnergy = GameLib.getEnergy(gameVariables[_gameId].p2Energy, rand);
             cardsPlayed[_gameId].player1DeckEnergy = GameLib.getDeckEnergy(gameVariables[_gameId].p1Energy, cardsPlayed[_gameId].player1HeldEnergy);
             cardsPlayed[_gameId].player2DeckEnergy = GameLib.getDeckEnergy(gameVariables[_gameId].p2Energy, cardsPlayed[_gameId].player2HeldEnergy);
+            gameVariables[_gameId].open = true;
         }
         if(order[requestId] == 2){
             uint256 _gameId = requests2GameId[requestId];

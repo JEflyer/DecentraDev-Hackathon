@@ -90,4 +90,9 @@ library GameLib {
 
         }
     }
+
+    function getPayouts(uint256 amount) internal pure returns(uint256 winner, uint256 community){
+        winner = amount*95/100;
+        community = amount - winner;
+    }
 }
